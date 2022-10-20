@@ -19,6 +19,62 @@ module.exports = createCoreController('api::post.post', {
     return updatedResponse;
   },
 
+  async update(ctx) {
+    const { id } = ctx.params;
+    const userId = ctx.state.user.id;
+    const { data } = ctx.request.body;
+    let entity;
+
+    const post = await strapi.db.query('api::post.post').findOne({
+      where: {
+        id: id
+      },
+      populate: { user: true },
+    });
+
+    if (!post) {
+      return ctx.unauthorized('You cannot update this post');
+    }
+
+    if (post.user.id != userId) {
+      return ctx.unauthorized('You cannot update this post');
+    } else {
+      entity = await strapi.entityService.update('api::post.post', id, {
+        data: {
+          ...data,
+          user: { id: userId}
+        }
+      });
+    }
+
+    return entity;
+  },
+
+  async delete(ctx) {
+    const { id } = ctx.params;
+    const userId = ctx.state.user.id;
+    let entity;
+
+    const post = await strapi.db.query('api::post.post').findOne({
+      where: {
+        id: id
+      },
+      populate: { user: true },
+    });
+
+    if (!post) {
+      return ctx.unauthorized('You cannot delete this post');
+    }
+
+    if (post.user.id != userId) {
+      return ctx.unauthorized('You cannot delete this post');
+    } else {
+      entity = await strapi.entityService.delete('api::post.post', id);
+    }
+
+    return entity;
+  },
+
   async find(ctx) {
     let response;
     const { id } = ctx.state.user;
